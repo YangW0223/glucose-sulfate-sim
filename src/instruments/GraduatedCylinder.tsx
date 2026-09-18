@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CylinderCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { smoothDragTarget } from '../interaction/smoothDrag';
 import { calculateRimOverflowRateMlPerSec, findBallisticOpeningHit, findBallisticPlaneOpeningHit, transferVolume } from '../engine/liquid';
 import { getOpeningTarget, updateOpeningTarget } from '../engine/spatialRegistry';
 import { useSimulationStore } from '../store/useSimulationStore';
@@ -112,11 +113,11 @@ export function GraduatedCylinder() {
     if (heldRef.current) {
       raycaster.current.setFromCamera(pointerRef.current, camera);
       if (raycaster.current.ray.intersectPlane(dragPlane.current, hitPoint.current)) {
-        body.setNextKinematicTranslation({
+        body.setNextKinematicTranslation(smoothDragTarget(body, {
           x: THREE.MathUtils.clamp(hitPoint.current.x, -0.45, 0.44),
           y: DRAG_Y,
           z: THREE.MathUtils.clamp(hitPoint.current.z, -0.34, 0.34),
-        });
+        }, delta));
         bodyQuaternion.setFromEuler(new THREE.Euler(0, 0, tiltRef.current));
         body.setNextKinematicRotation(bodyQuaternion);
       }

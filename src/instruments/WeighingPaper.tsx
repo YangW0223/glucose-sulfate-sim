@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CuboidCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { smoothDragTarget } from '../interaction/smoothDrag';
 import { findBallisticOpeningHit, findBallisticPlaneOpeningHit } from '../engine/liquid';
 import { calculatePowderPourRateGPerSec, transferMass } from '../engine/powder';
 import { getOpeningTarget, updateOpeningTarget } from '../engine/spatialRegistry';
@@ -86,11 +87,11 @@ export function WeighingPaper() {
     if (heldRef.current) {
       raycaster.current.setFromCamera(pointerRef.current, camera);
       if (raycaster.current.ray.intersectPlane(dragPlane.current, hitPoint.current)) {
-        body.setNextKinematicTranslation({
+        body.setNextKinematicTranslation(smoothDragTarget(body, {
           x: THREE.MathUtils.clamp(hitPoint.current.x, -0.56, 0.52),
           y: DRAG_Y,
           z: THREE.MathUtils.clamp(hitPoint.current.z, -0.34, 0.34),
-        });
+        }, delta));
         quaternion.setFromEuler(new THREE.Euler(0, 0, tiltRef.current));
         body.setNextKinematicRotation(quaternion);
       }

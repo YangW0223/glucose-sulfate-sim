@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { BallCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { smoothDragTarget } from '../interaction/smoothDrag';
 import { updateOpeningTarget, updateSphereTarget } from '../engine/spatialRegistry';
 import { useSimulationStore } from '../store/useSimulationStore';
 import { GlasswareModel } from './GlasswareModel';
@@ -48,17 +49,17 @@ export function VolumetricFlask() {
     );
   };
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const body = bodyRef.current;
     if (!body) return;
     if (heldRef.current) {
       raycaster.current.setFromCamera(pointerRef.current, camera);
       if (raycaster.current.ray.intersectPlane(dragPlane.current, hitPoint.current)) {
-        body.setNextKinematicTranslation({
+        body.setNextKinematicTranslation(smoothDragTarget(body, {
           x: THREE.MathUtils.clamp(hitPoint.current.x, -0.54, 0.22),
           y: DRAG_Y,
           z: THREE.MathUtils.clamp(hitPoint.current.z, -0.28, 0.30),
-        });
+        }, delta));
         body.setNextKinematicRotation({ x: 0, y: 0, z: 0, w: 1 });
       }
     }

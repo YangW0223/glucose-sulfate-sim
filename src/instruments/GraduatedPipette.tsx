@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CylinderCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { smoothDragTarget } from '../interaction/smoothDrag';
 import { findBallisticOpeningHit } from '../engine/liquid';
 import { getOpeningTarget, getSphereTarget, updateSphereTarget } from '../engine/spatialRegistry';
 import { useSimulationStore } from '../store/useSimulationStore';
@@ -139,11 +140,11 @@ export function GraduatedPipette() {
       dragPlane.current.constant = -heightRef.current;
       raycaster.current.setFromCamera(pointerRef.current, camera);
       if (raycaster.current.ray.intersectPlane(dragPlane.current, hitPoint.current)) {
-        body.setNextKinematicTranslation({
+        body.setNextKinematicTranslation(smoothDragTarget(body, {
           x: THREE.MathUtils.clamp(hitPoint.current.x, -0.54, 0.48),
           y: heightRef.current,
           z: THREE.MathUtils.clamp(hitPoint.current.z, -0.31, 0.31),
-        });
+        }, delta));
       }
     }
 

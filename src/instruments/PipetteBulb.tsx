@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { smoothDragTarget } from '../interaction/smoothDrag';
 import { getSphereTarget } from '../engine/spatialRegistry';
 import { useSimulationStore } from '../store/useSimulationStore';
 import { RubberwareModel } from './RubberwareModel';
@@ -44,17 +45,17 @@ export function PipetteBulb() {
     );
   };
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const body = bodyRef.current;
     if (!body || attached) return;
     if (heldRef.current) {
       raycaster.current.setFromCamera(pointerRef.current, camera);
       if (raycaster.current.ray.intersectPlane(dragPlane.current, hitPoint.current)) {
-        body.setNextKinematicTranslation({
+        body.setNextKinematicTranslation(smoothDragTarget(body, {
           x: THREE.MathUtils.clamp(hitPoint.current.x, -0.48, 0.50),
           y: DRAG_Y,
           z: THREE.MathUtils.clamp(hitPoint.current.z, -0.30, 0.30),
-        });
+        }, delta));
       }
     }
   });
