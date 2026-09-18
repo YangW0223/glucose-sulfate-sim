@@ -129,17 +129,39 @@ const initialState = {
   heldInstrumentId: null as InstrumentId | null,
 };
 
+const nearlyEqual = (a: number, b: number, epsilon: number) => Math.abs(a - b) <= epsilon;
+
 export const useSimulationStore = create<SimulationStore>((set) => ({
   ...initialState,
   spillRecords: [],
   powderSpillRecords: [],
   events: [],
   resetVersion: 0,
-  setHeldInstrument: (id) => set({ heldInstrumentId: id }),
-  setWashBottleVolume: (value) => set({ washBottleVolumeMl: Math.max(0, Math.min(250, value)) }),
-  setSourceVolume: (value) => set({ sourceVolumeMl: Math.max(0, Math.min(50, value)) }),
-  setTargetVolume: (value) => set({ targetVolumeMl: Math.max(0, Math.min(50, value)) }),
-  setControlTubeVolume: (value) => set({ controlTubeVolumeMl: Math.max(0, Math.min(50, value)) }),
+
+  setHeldInstrument: (id) =>
+    set((state) => (state.heldInstrumentId === id ? state : { heldInstrumentId: id })),
+
+  setWashBottleVolume: (value) =>
+    set((state) => {
+      const next = Math.max(0, Math.min(250, value));
+      return nearlyEqual(state.washBottleVolumeMl, next, 0.0001) ? state : { washBottleVolumeMl: next };
+    }),
+  setSourceVolume: (value) =>
+    set((state) => {
+      const next = Math.max(0, Math.min(50, value));
+      return nearlyEqual(state.sourceVolumeMl, next, 0.0001) ? state : { sourceVolumeMl: next };
+    }),
+  setTargetVolume: (value) =>
+    set((state) => {
+      const next = Math.max(0, Math.min(50, value));
+      return nearlyEqual(state.targetVolumeMl, next, 0.0001) ? state : { targetVolumeMl: next };
+    }),
+  setControlTubeVolume: (value) =>
+    set((state) => {
+      const next = Math.max(0, Math.min(50, value));
+      return nearlyEqual(state.controlTubeVolumeMl, next, 0.0001) ? state : { controlTubeVolumeMl: next };
+    }),
+
   recordSpill: ({ volumeMl, position, liquid = 'water' }) => {
     const amount = Math.max(0, volumeMl);
     if (amount <= 0) return;
@@ -184,31 +206,89 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
       };
     });
   },
+
   setTelemetry: ({ rate, tiltDeg, squeezePressure, destination, operation }) =>
-    set((state) => ({
-      pourRateMlPerSec: rate,
-      tiltDeg: tiltDeg ?? state.tiltDeg,
-      squeezePressure: squeezePressure ?? state.squeezePressure,
-      streamDestination: destination,
-      activeOperation: operation,
-    })),
+    set((state) => {
+      const nextTilt = tiltDeg ?? state.tiltDeg;
+      const nextPressure = squeezePressure ?? state.squeezePressure;
+      if (
+        nearlyEqual(state.pourRateMlPerSec, rate, 0.05) &&
+        nearlyEqual(state.tiltDeg, nextTilt, 0.1) &&
+        nearlyEqual(state.squeezePressure, nextPressure, 0.01) &&
+        state.streamDestination === destination &&
+        state.activeOperation === operation
+      ) {
+        return state;
+      }
+      return {
+        pourRateMlPerSec: rate,
+        tiltDeg: nextTilt,
+        squeezePressure: nextPressure,
+        streamDestination: destination,
+        activeOperation: operation,
+      };
+    }),
 
-  setStandardFlaskVolume: (value) => set({ standardFlaskVolumeMl: Math.max(0, Math.min(100, value)) }),
-  setPipetteVolume: (value) => set({ pipetteVolumeMl: Math.max(0, Math.min(5, value)) }),
-  setControlStandardVolume: (value) => set({ controlStandardVolumeMl: Math.max(0, value) }),
-  setPipetteBulbAttached: (value) => set({ pipetteBulbAttached: value }),
+  setStandardFlaskVolume: (value) =>
+    set((state) => {
+      const next = Math.max(0, Math.min(100, value));
+      return nearlyEqual(state.standardFlaskVolumeMl, next, 0.0001) ? state : { standardFlaskVolumeMl: next };
+    }),
+  setPipetteVolume: (value) =>
+    set((state) => {
+      const next = Math.max(0, Math.min(5, value));
+      return nearlyEqual(state.pipetteVolumeMl, next, 0.0001) ? state : { pipetteVolumeMl: next };
+    }),
+  setControlStandardVolume: (value) =>
+    set((state) => {
+      const next = Math.max(0, value);
+      return nearlyEqual(state.controlStandardVolumeMl, next, 0.0001) ? state : { controlStandardVolumeMl: next };
+    }),
+  setPipetteBulbAttached: (value) =>
+    set((state) => (state.pipetteBulbAttached === value ? state : { pipetteBulbAttached: value })),
+
   setPipetteTelemetry: ({ suction01, dispense01, rate, operation }) =>
-    set((state) => ({
-      pipetteSuction01: suction01 ?? state.pipetteSuction01,
-      pipetteDispense01: dispense01 ?? state.pipetteDispense01,
-      pipetteFlowRateMlPerSec: rate ?? state.pipetteFlowRateMlPerSec,
-      pipetteOperation: operation,
-    })),
+    set((state) => {
+      const nextSuction = suction01 ?? state.pipetteSuction01;
+      const nextDispense = dispense01 ?? state.pipetteDispense01;
+      const nextRate = rate ?? state.pipetteFlowRateMlPerSec;
+      if (
+        nearlyEqual(state.pipetteSuction01, nextSuction, 0.01) &&
+        nearlyEqual(state.pipetteDispense01, nextDispense, 0.01) &&
+        nearlyEqual(state.pipetteFlowRateMlPerSec, nextRate, 0.03) &&
+        state.pipetteOperation === operation
+      ) {
+        return state;
+      }
+      return {
+        pipetteSuction01: nextSuction,
+        pipetteDispense01: nextDispense,
+        pipetteFlowRateMlPerSec: nextRate,
+        pipetteOperation: operation,
+      };
+    }),
 
-  setGlucoseBottleMass: (value) => set({ glucoseBottleMassG: Math.max(0, value) }),
-  setSpatulaPowderMass: (value) => set({ spatulaPowderMassG: Math.max(0, Math.min(1.2, value)) }),
-  setPaperGlucoseMass: (value) => set({ paperGlucoseMassG: Math.max(0, value) }),
-  setTubeGlucoseMass: (value) => set({ tubeGlucoseMassG: Math.max(0, value) }),
+  setGlucoseBottleMass: (value) =>
+    set((state) => {
+      const next = Math.max(0, value);
+      return nearlyEqual(state.glucoseBottleMassG, next, 0.00001) ? state : { glucoseBottleMassG: next };
+    }),
+  setSpatulaPowderMass: (value) =>
+    set((state) => {
+      const next = Math.max(0, Math.min(1.2, value));
+      return nearlyEqual(state.spatulaPowderMassG, next, 0.00001) ? state : { spatulaPowderMassG: next };
+    }),
+  setPaperGlucoseMass: (value) =>
+    set((state) => {
+      const next = Math.max(0, value);
+      return nearlyEqual(state.paperGlucoseMassG, next, 0.00001) ? state : { paperGlucoseMassG: next };
+    }),
+  setTubeGlucoseMass: (value) =>
+    set((state) => {
+      const next = Math.max(0, value);
+      return nearlyEqual(state.tubeGlucoseMassG, next, 0.00001) ? state : { tubeGlucoseMassG: next };
+    }),
+
   recordPowderSpill: ({ massG, position }) => {
     const amount = Math.max(0, massG);
     if (amount <= 0) return;
@@ -220,7 +300,10 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
         const dx = records[i].position[0] - position[0];
         const dz = records[i].position[2] - position[2];
         const d2 = dx * dx + dz * dz;
-        if (d2 < nearestD2) { nearestD2 = d2; nearestIndex = i; }
+        if (d2 < nearestD2) {
+          nearestD2 = d2;
+          nearestIndex = i;
+        }
       }
       if (nearestIndex >= 0) {
         const current = records[nearestIndex];
@@ -241,11 +324,23 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
           createdAt: Date.now(),
         });
       }
-      return { powderSpilledMassG: state.powderSpilledMassG + amount, powderSpillRecords: records.slice(-24) };
+      return {
+        powderSpilledMassG: state.powderSpilledMassG + amount,
+        powderSpillRecords: records.slice(-24),
+      };
     });
   },
-  setPaperOnBalance: (value) => set({ paperOnBalance: value }),
-  setBalanceReading: (value) => set({ balanceReadingG: value }),
+
+  setPaperOnBalance: (value) =>
+    set((state) => (state.paperOnBalance === value ? state : { paperOnBalance: value })),
+
+  setBalanceReading: (value) =>
+    set((state) =>
+      nearlyEqual(state.balanceReadingG, value, 0.0005)
+        ? state
+        : { balanceReadingG: value },
+    ),
+
   tareBalance: (grossMassG) => {
     set({ balanceTareG: grossMassG });
     set((state) => ({
@@ -260,7 +355,17 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
       ].slice(-160),
     }));
   },
-  setPowderTelemetry: ({ rate, operation }) => set({ powderRateGPerSec: rate, powderOperation: operation }),
+
+  setPowderTelemetry: ({ rate, operation }) =>
+    set((state) => {
+      if (
+        nearlyEqual(state.powderRateGPerSec, rate, 0.002) &&
+        state.powderOperation === operation
+      ) {
+        return state;
+      }
+      return { powderRateGPerSec: rate, powderOperation: operation };
+    }),
 
   log: (event) =>
     set((state) => ({
@@ -273,6 +378,7 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
         },
       ].slice(-160),
     })),
+
   reset: () =>
     set((state) => ({
       ...initialState,

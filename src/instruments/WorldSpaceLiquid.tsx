@@ -18,6 +18,8 @@ interface ShaderWithUniforms {
   uniforms: Record<string, { value: unknown }>;
 }
 
+const SURFACE_UPDATE_INTERVAL = 1 / 30;
+
 export function WorldSpaceLiquid({
   radius,
   cavityHeight,
@@ -32,11 +34,15 @@ export function WorldSpaceLiquid({
   const surfaceRef = useRef<THREE.Mesh>(null);
   const liquidShaderRef = useRef<ShaderWithUniforms | null>(null);
   const surfaceShaderRef = useRef<ShaderWithUniforms | null>(null);
+  const updateAccumulatorRef = useRef(SURFACE_UPDATE_INTERVAL);
   const parentInverse = useMemo(() => new THREE.Matrix4(), []);
   const parentQuat = useMemo(() => new THREE.Quaternion(), []);
   const inverseParentQuat = useMemo(() => new THREE.Quaternion(), []);
   const worldCenter = useMemo(() => new THREE.Vector3(), []);
-  const horizontalWorldQuat = useMemo(() => new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0)), []);
+  const horizontalWorldQuat = useMemo(
+    () => new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0)),
+    [],
+  );
   const localSurfacePosition = useMemo(() => new THREE.Vector3(), []);
   const worldScale = useMemo(() => new THREE.Vector3(), []);
 
@@ -74,7 +80,7 @@ export function WorldSpaceLiquid({
         );
       liquidShaderRef.current = shader as unknown as ShaderWithUniforms;
     };
-    material.customProgramCacheKey = () => 'world-space-liquid-body-v2';
+    material.customProgramCacheKey = () => 'world-space-liquid-body-v3';
     return material;
   }, [color, turbidity]);
 
@@ -123,11 +129,15 @@ export function WorldSpaceLiquid({
         );
       surfaceShaderRef.current = shader as unknown as ShaderWithUniforms;
     };
-    material.customProgramCacheKey = () => 'world-space-liquid-surface-v2';
+    material.customProgramCacheKey = () => 'world-space-liquid-surface-v3';
     return material;
   }, [cavityHeight, color, radius]);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
+    updateAccumulatorRef.current += Math.min(delta, 0.05);
+    if (updateAccumulatorRef.current < SURFACE_UPDATE_INTERVAL) return;
+    updateAccumulatorRef.current = 0;
+
     const volumeMesh = volumeRef.current;
     const surfaceMesh = surfaceRef.current;
     if (!volumeMesh || !surfaceMesh) return;
@@ -170,7 +180,7 @@ export function WorldSpaceLiquid({
   return (
     <>
       <mesh ref={volumeRef} position={[0, centerY, 0]} material={bodyMaterial} renderOrder={2}>
-        <cylinderGeometry args={[radius, radius, cavityHeight, 96, 1, false]} />
+        <cylinderGeometry args={[radius, radius, cavityHeight, 64, 1, false]} />
       </mesh>
       <mesh ref={surfaceRef} material={surfaceMaterial} renderOrder={3}>
         <planeGeometry args={[radius * 40, radius * 40, 1, 1]} />
