@@ -8,20 +8,21 @@ interface GlasswareModelProps {
 }
 
 /**
- * 玻璃器皿统一渲染：
- * 1. PBR transmission 保留玻璃透光；
- * 2. 使用稳定深度写入，减少透明物体与层板/液体之间的排序闪烁；
- * 3. 仅给结构硬边添加深色轮廓，并关闭轮廓自身的 depthTest，避免轮廓与玻璃表面 z-fighting。
+ * 玻璃器皿统一渲染。
+ *
+ * 玻璃主体依赖 PBR transmission / IOR / thickness 表现折射和厚度。
+ * 轮廓线只做很轻的结构强调，避免器皿变成“卡通描边”。
  */
 export function GlasswareModel({ url }: GlasswareModelProps) {
   const { scene } = useGLTF(url);
+
   const glassMaterial = useMemo(() => createGlassMaterial(), []);
   const edgeMaterial = useMemo(
     () =>
       new THREE.LineBasicMaterial({
-        color: '#173f4d',
+        color: '#7aa8b6',
         transparent: true,
-        opacity: 0.82,
+        opacity: 0.34,
         depthWrite: false,
         depthTest: false,
         toneMapped: false,
@@ -39,18 +40,19 @@ export function GlasswareModel({ url }: GlasswareModelProps) {
 
     for (const mesh of meshes) {
       mesh.material = glassMaterial;
-      // 透明玻璃本身不参与阴影贴图，避免器皿底部出现高频阴影噪点/闪烁。
+
+      // 透明/透射玻璃不参与阴影贴图，避免底部出现阴影噪点。
       mesh.castShadow = false;
       mesh.receiveShadow = false;
       mesh.renderOrder = 4;
 
-      // EdgesGeometry 的阈值较高，只突出杯口、底座、连接边等结构，不画满整圈竖线。
-      const edges = new THREE.EdgesGeometry(mesh.geometry, 38);
+      // 只在杯口、底座等较硬的结构边上加非常轻的轮廓。
+      const edges = new THREE.EdgesGeometry(mesh.geometry, 42);
       const lines = new THREE.LineSegments(edges, edgeMaterial);
       lines.renderOrder = 20;
       lines.frustumCulled = false;
       lines.raycast = () => null;
-      lines.name = `${mesh.name || 'GlassMesh'}__outline`;
+      lines.name = `${mesh.name || 'GlassMesh'}__glassRim`;
       mesh.add(lines);
     }
 
