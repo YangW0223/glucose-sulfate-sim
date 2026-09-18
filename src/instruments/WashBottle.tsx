@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CylinderCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { InstrumentHitArea } from '../interaction/InstrumentHitArea';
 import { smoothDragTarget } from '../interaction/smoothDrag';
 import { calculateSqueezeJetRateMlPerSec, findBallisticOpeningHit, findBallisticPlaneOpeningHit, transferVolume } from '../engine/liquid';
 import { getOpeningTarget } from '../engine/spatialRegistry';
@@ -208,6 +209,13 @@ export function WashBottle() {
       >
         <CylinderCollider args={[0.078, 0.043]} position={[0, -0.002, 0]} />
         <group
+          onPointerOver={(event) => {
+            event.stopPropagation();
+            if (!heldRef.current) gl.domElement.style.cursor = 'grab';
+          }}
+          onPointerOut={() => {
+            if (!heldRef.current) gl.domElement.style.cursor = 'default';
+          }}
           onPointerDown={(event) => {
             event.stopPropagation();
             setDocked(false);
@@ -234,7 +242,8 @@ export function WashBottle() {
             gl.domElement.releasePointerCapture(event.pointerId);
           }}
         >
-          <PlasticwareModel url="/models/wash-bottle-250ml.glb" />
+          <InstrumentHitArea size={[0.18, 0.24, 0.14]} />
+        <PlasticwareModel url="/models/wash-bottle-250ml.glb" />
         </group>
       </RigidBody>
       <LiquidStream state={streamState} />

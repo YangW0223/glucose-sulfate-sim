@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CylinderCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { InstrumentHitArea } from '../interaction/InstrumentHitArea';
 import { smoothDragTarget } from '../interaction/smoothDrag';
 import { updateOpeningTarget } from '../engine/spatialRegistry';
 import { useSimulationStore } from '../store/useSimulationStore';
@@ -104,6 +105,13 @@ export function ControlNesslerTube() {
     >
       <CylinderCollider args={[0.096, 0.0145]} position={[0, 0.008, 0]} />
       <group
+        onPointerOver={(event) => {
+          event.stopPropagation();
+          if (!heldRef.current) gl.domElement.style.cursor = 'grab';
+        }}
+        onPointerOut={() => {
+          if (!heldRef.current) gl.domElement.style.cursor = 'default';
+        }}
         onPointerDown={(event) => {
           event.stopPropagation();
           setDocked(false);
@@ -128,6 +136,7 @@ export function ControlNesslerTube() {
           gl.domElement.releasePointerCapture(event.pointerId);
         }}
       >
+        <InstrumentHitArea size={[0.05, 0.22, 0.05]} />
         <GlasswareModel url="/models/nessler-tube-50ml.glb" />
         <WorldSpaceLiquid
           radius={NESSLER_50.innerRadiusM * 0.94}

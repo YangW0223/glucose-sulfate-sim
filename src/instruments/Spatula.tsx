@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CuboidCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { InstrumentHitArea } from '../interaction/InstrumentHitArea';
 import { smoothDragTarget } from '../interaction/smoothDrag';
 import { calculateScoopRateGPerSec, calculatePowderPourRateGPerSec, transferMass } from '../engine/powder';
 import { findBallisticOpeningHit, findBallisticPlaneOpeningHit } from '../engine/liquid';
@@ -203,6 +204,13 @@ export function Spatula() {
       >
         <CuboidCollider args={[0.077, 0.005, 0.012]} />
         <group
+          onPointerOver={(event) => {
+            event.stopPropagation();
+            if (!heldRef.current) gl.domElement.style.cursor = 'grab';
+          }}
+          onPointerOut={() => {
+            if (!heldRef.current) gl.domElement.style.cursor = 'default';
+          }}
           onPointerDown={(event) => {
             event.stopPropagation();
             setDocked(false);
@@ -239,7 +247,8 @@ export function Spatula() {
             );
           }}
         >
-          <LabSolidModel url="/models/lab-spatula.glb" preset="metal" />
+          <InstrumentHitArea size={[0.24, 0.045, 0.055]} />
+        <LabSolidModel url="/models/lab-spatula.glb" preset="metal" />
           {spatulaMass > 0.002 && (
             <mesh position={[0.083, 0.008, 0]} scale={[1, 0.5 + powderScale * 0.9, 1]} castShadow>
               <sphereGeometry args={[0.0115 * Math.sqrt(Math.max(0.08, powderScale)), 20, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />

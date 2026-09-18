@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CylinderCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { InstrumentHitArea } from '../interaction/InstrumentHitArea';
 import { smoothDragTarget } from '../interaction/smoothDrag';
 import { calculateRimOverflowRateMlPerSec, findBallisticOpeningHit, findBallisticPlaneOpeningHit, transferVolume } from '../engine/liquid';
 import { getOpeningTarget, updateOpeningTarget } from '../engine/spatialRegistry';
@@ -258,6 +259,13 @@ export function GraduatedCylinder() {
       >
         <CylinderCollider args={[0.082, 0.030]} position={[0, 0.003, 0]} />
         <group
+          onPointerOver={(event) => {
+            event.stopPropagation();
+            if (!heldRef.current) gl.domElement.style.cursor = 'grab';
+          }}
+          onPointerOut={() => {
+            if (!heldRef.current) gl.domElement.style.cursor = 'default';
+          }}
           onPointerDown={(event) => {
             event.stopPropagation();
             setDocked(false);
@@ -288,7 +296,8 @@ export function GraduatedCylinder() {
             rotate(event.deltaY > 0 ? 1 : -1);
           }}
         >
-          <GlasswareModel url="/models/graduated-cylinder-50ml.glb" />
+          <InstrumentHitArea size={[0.065, 0.19, 0.065]} />
+        <GlasswareModel url="/models/graduated-cylinder-50ml.glb" />
           <GraduationMarks />
           <WorldSpaceLiquid
             radius={CYLINDER_50.innerRadiusM * 0.96}

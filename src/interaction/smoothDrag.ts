@@ -10,16 +10,14 @@ interface TranslationTarget {
 /**
  * Smooth kinematic movement while an instrument is held.
  *
- * Previously most instruments were moved directly from their shelf position to
- * a fixed operation plane on the first physics frame. That looked like the
- * object disappeared/teleported. Damping the target keeps the whole pickup
- * motion visible and continuous.
+ * A fairly quick response keeps the instrument visually continuous without
+ * making it feel heavy or "stuck" behind the mouse.
  */
 export function smoothDragTarget(
   body: RapierRigidBody,
   target: TranslationTarget,
   deltaSeconds: number,
-  response = 18,
+  response = 26,
 ): TranslationTarget {
   const current = body.translation();
   const dt = Math.min(Math.max(deltaSeconds, 0), 0.05);

@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { InstrumentHitArea } from '../interaction/InstrumentHitArea';
 import { smoothDragTarget } from '../interaction/smoothDrag';
 import { getSphereTarget } from '../engine/spatialRegistry';
 import { useSimulationStore } from '../store/useSimulationStore';
@@ -65,6 +66,13 @@ export function PipetteBulb() {
   return (
     <RigidBody ref={bodyRef} type="kinematicPosition" colliders="ball" position={START_POSITION}>
       <group
+        onPointerOver={(event) => {
+          event.stopPropagation();
+          if (!heldRef.current) gl.domElement.style.cursor = 'grab';
+        }}
+        onPointerOut={() => {
+          if (!heldRef.current) gl.domElement.style.cursor = 'default';
+        }}
         onPointerDown={(event) => {
           event.stopPropagation();
           updatePointer(event);
@@ -99,6 +107,7 @@ export function PipetteBulb() {
           gl.domElement.releasePointerCapture(event.pointerId);
         }}
       >
+        <InstrumentHitArea size={[0.09, 0.13, 0.09]} />
         <RubberwareModel url="/models/pipette-bulb.glb" />
       </group>
     </RigidBody>

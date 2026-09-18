@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CylinderCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { InstrumentHitArea } from '../interaction/InstrumentHitArea';
 import { smoothDragTarget } from '../interaction/smoothDrag';
 import { findBallisticOpeningHit } from '../engine/liquid';
 import { getOpeningTarget, getSphereTarget, updateSphereTarget } from '../engine/spatialRegistry';
@@ -250,6 +251,13 @@ export function GraduatedPipette() {
       <RigidBody ref={bodyRef} type="kinematicPosition" colliders={false} position={START_POSITION}>
         <CylinderCollider args={[0.135, 0.0045]} />
         <group
+          onPointerOver={(event) => {
+            event.stopPropagation();
+            if (!heldRef.current) gl.domElement.style.cursor = 'grab';
+          }}
+          onPointerOut={() => {
+            if (!heldRef.current) gl.domElement.style.cursor = 'default';
+          }}
           onPointerDown={(event) => {
             event.stopPropagation();
             updatePointer(event);
@@ -285,7 +293,8 @@ export function GraduatedPipette() {
             );
           }}
         >
-          <GlasswareModel url="/models/graduated-pipette-5ml.glb" />
+          <InstrumentHitArea size={[0.04, 0.31, 0.04]} />
+        <GlasswareModel url="/models/graduated-pipette-5ml.glb" />
           <PipetteGraduations />
           <WorldSpaceLiquid
             radius={PIPETTE_INNER_RADIUS * 0.88}

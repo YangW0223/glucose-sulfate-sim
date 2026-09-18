@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CuboidCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { InstrumentHitArea } from '../interaction/InstrumentHitArea';
 import { smoothDragTarget } from '../interaction/smoothDrag';
 import { findBallisticOpeningHit, findBallisticPlaneOpeningHit } from '../engine/liquid';
 import { calculatePowderPourRateGPerSec, transferMass } from '../engine/powder';
@@ -173,6 +174,13 @@ export function WeighingPaper() {
       >
         <CuboidCollider args={[HALF_SIZE, 0.0013, HALF_SIZE]} />
         <group
+          onPointerOver={(event) => {
+            event.stopPropagation();
+            if (!heldRef.current) gl.domElement.style.cursor = 'grab';
+          }}
+          onPointerOut={() => {
+            if (!heldRef.current) gl.domElement.style.cursor = 'default';
+          }}
           onPointerDown={(event) => {
             event.stopPropagation();
             setDocked(false);
@@ -209,7 +217,8 @@ export function WeighingPaper() {
             );
           }}
         >
-          <mesh castShadow receiveShadow>
+          <InstrumentHitArea size={[0.11, 0.025, 0.11]} />
+        <mesh castShadow receiveShadow>
             <boxGeometry args={[HALF_SIZE * 2, 0.002, HALF_SIZE * 2]} />
             <meshStandardMaterial color="#f8f6ed" roughness={0.92} side={THREE.DoubleSide} />
           </mesh>

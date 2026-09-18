@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { CylinderCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { InstrumentHitArea } from '../interaction/InstrumentHitArea';
 import { smoothDragTarget } from '../interaction/smoothDrag';
 import { updateSphereTarget } from '../engine/spatialRegistry';
 import { INSTRUMENT_HOME } from '../scene/labLayout';
@@ -91,6 +92,13 @@ export function GlucoseBottle() {
     >
       <CylinderCollider args={[0.066, 0.034]} position={[0, 0.011, 0]} />
       <group
+        onPointerOver={(event) => {
+          event.stopPropagation();
+          if (!heldRef.current) gl.domElement.style.cursor = 'grab';
+        }}
+        onPointerOut={() => {
+          if (!heldRef.current) gl.domElement.style.cursor = 'default';
+        }}
         onPointerDown={(event) => {
           event.stopPropagation();
           setDocked(false);
@@ -115,6 +123,7 @@ export function GlucoseBottle() {
           gl.domElement.releasePointerCapture(event.pointerId);
         }}
       >
+        <InstrumentHitArea size={[0.11, 0.17, 0.11]} />
         <LabSolidModel url="/models/glucose-reagent-bottle.glb" preset="bottle" />
         <mesh position={[0, -0.045 + fillScale * 0.035, 0]}>
           <cylinderGeometry args={[0.029, 0.029, Math.max(0.004, fillScale * 0.06), 64]} />

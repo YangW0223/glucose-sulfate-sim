@@ -2,6 +2,7 @@ import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { BallCollider, RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { InstrumentHitArea } from '../interaction/InstrumentHitArea';
 import { smoothDragTarget } from '../interaction/smoothDrag';
 import { updateOpeningTarget, updateSphereTarget } from '../engine/spatialRegistry';
 import { useSimulationStore } from '../store/useSimulationStore';
@@ -94,6 +95,13 @@ export function VolumetricFlask() {
     >
       <BallCollider args={[0.044]} position={[0, -0.02, 0]} />
       <group
+        onPointerOver={(event) => {
+          event.stopPropagation();
+          if (!heldRef.current) gl.domElement.style.cursor = 'grab';
+        }}
+        onPointerOut={() => {
+          if (!heldRef.current) gl.domElement.style.cursor = 'default';
+        }}
         onPointerDown={(event) => {
           event.stopPropagation();
           updatePointer(event);
@@ -117,6 +125,7 @@ export function VolumetricFlask() {
           gl.domElement.releasePointerCapture(event.pointerId);
         }}
       >
+        <InstrumentHitArea size={[0.115, 0.27, 0.115]} />
         <GlasswareModel url="/models/volumetric-flask-100ml.glb" />
         <mesh position={[0, -0.030, 0]} scale={[1, 0.78 + fillScale * 0.20, 1]} renderOrder={2}>
           <sphereGeometry args={[0.037, 48, 32]} />
