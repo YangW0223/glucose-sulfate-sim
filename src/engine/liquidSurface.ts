@@ -4,21 +4,10 @@ type SampleKey = string;
 const sampleCache = new Map<SampleKey, Float32Array>();
 const yScratchCache = new Map<SampleKey, Float32Array>();
 
-const RADIAL_STEPS = 5;
-const ANGULAR_STEPS = 16;
-const Y_STEPS = 7;
-const BINARY_SEARCH_STEPS = 10;
-
-function buildCylinderSamples(
-  radius: number,
-  height: number,
-  radialSteps = RADIAL_STEPS,
-  angularSteps = ANGULAR_STEPS,
-  ySteps = Y_STEPS,
-) {
+function buildCylinderSamples(radius: number, height: number, radialSteps = 7, angularSteps = 24, ySteps = 9) {
   const key = `${radius}:${height}:${radialSteps}:${angularSteps}:${ySteps}`;
   const cached = sampleCache.get(key);
-  if (cached) return { samples: cached, key };
+  if (cached) return cached;
 
   const values: number[] = [];
   // Equal-area radial sampling: r = R * sqrt((i + 0.5) / N)
@@ -33,18 +22,16 @@ function buildCylinderSamples(
     }
   }
 
-  const samples = new Float32Array(values);
-  sampleCache.set(key, samples);
-  yScratchCache.set(key, new Float32Array(samples.length / 3));
-  return { samples, key };
+  const result = new Float32Array(values);
+  sampleCache.set(key, result);
+  yScratchCache.set(key, new Float32Array(result.length / 3));
+  return result;
 }
 
 /**
  * Estimate the world-space Y of a horizontal free surface that preserves volume
- * inside a tilted cylindrical cavity.
- *
- * This is intentionally an interactive approximation, not CFD. The sample count
- * is kept modest because several vessels may evaluate the surface at once.
+ * inside a tilted cylindrical cavity. The sampling is deterministic and uniform
+ * by volume, so the fill ratio maps to a Y quantile after transformation.
  */
 export function calculateCylinderSurfaceWorldY(
   matrixWorld: THREE.Matrix4,
@@ -53,7 +40,8 @@ export function calculateCylinderSurfaceWorldY(
   fillRatio: number,
 ): number {
   const clamped = THREE.MathUtils.clamp(fillRatio, 0, 1);
-  const { samples, key } = buildCylinderSamples(radius, height);
+  const samples = buildCylinderSamples(radius, height);
+  const key = `${radius}:${height}:7:24:9`;
   const ys = yScratchCache.get(key)!;
   const e = matrixWorld.elements;
 
@@ -77,7 +65,7 @@ export function calculateCylinderSurfaceWorldY(
   let lo = minY;
   let hi = maxY;
   const targetCount = clamped * count;
-  for (let iteration = 0; iteration < BINARY_SEARCH_STEPS; iteration += 1) {
+  for (let iteration = 0; iteration < 13; iteration += 1) {
     const mid = (lo + hi) / 2;
     let below = 0;
     for (let i = 0; i < count; i += 1) {

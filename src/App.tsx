@@ -21,15 +21,7 @@ export default function App() {
             <small>称取供试品 → 配制供试液 → 吸取 2.0 ml 标准液 → 配制对照液</small>
           </div>
           <div className="canvas-wrap">
-            <Canvas
-              shadows
-              dpr={[1, 1.35]}
-              gl={{
-                antialias: true,
-                alpha: true,
-                powerPreference: 'high-performance',
-              }}
-            >
+            <Canvas shadows dpr={[1, 1.75]} gl={{ antialias: true, alpha: true }}>
               <LabScene />
             </Canvas>
           </div>
