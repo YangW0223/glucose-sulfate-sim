@@ -32,8 +32,21 @@ export function WorkbenchDropZone() {
         <boxGeometry args={[0.008, 0.003, depth]} />
         <meshBasicMaterial color={edge} depthWrite={false} toneMapped={false} />
       </mesh>
-      <Html position={[0, y + 0.035, 0.37]} center occlude={false} style={{ pointerEvents: 'none' }}>
-        <div className="drop-zone-tip">正在拿取：{INSTRUMENT_LABEL[held]} · 移到框内松开鼠标放到实验台</div>
+
+      <Html
+        position={[cx, y + 0.045, WORKBENCH_DROP_BOUNDS.maxZ - 0.045]}
+        center
+        occlude={false}
+        zIndexRange={[30, 20]}
+        style={{
+          pointerEvents: 'none',
+          whiteSpace: 'nowrap',
+          width: 'max-content',
+        }}
+      >
+        <div className="drop-zone-tip">
+          正在拿取：{INSTRUMENT_LABEL[held]} · 移到黄色框内松开
+        </div>
       </Html>
     </group>
   );

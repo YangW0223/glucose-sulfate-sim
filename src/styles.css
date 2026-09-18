@@ -187,3 +187,25 @@ kbd {
   white-space: nowrap;
   user-select: none;
 }
+
+
+.drop-zone-tip {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  max-width: none;
+  padding: 7px 12px;
+  border: 1px solid rgba(243, 200, 94, 0.94);
+  border-radius: 999px;
+  background: rgba(54, 40, 10, 0.9);
+  color: #fff6d6;
+  box-shadow: 0 5px 16px rgba(45, 31, 5, 0.24);
+  backdrop-filter: blur(5px);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  word-break: keep-all;
+  user-select: none;
+}
